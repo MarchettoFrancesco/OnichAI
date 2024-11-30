@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grocery Promotions and Recipes</title>
+    <style>
+      /* Reset some default styles */
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        color: white;
+      }
+
+      /* Header with logo and footer link */
+      header {
+        width: 100%;
+        background-color: #388e3c;
+        padding: 20px;
+        padding-left: 30px;
+        padding-right: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      header .logo {
+        width: 150px;
+        height: auto;
+        margin: 0% 5%;
+      }
+
+      header .footer-link {
+        margin: 0% 5%;
+        color: white;
+        text-decoration: none;
+        font-size: 16px;
+      }
+
+      /* Center the title */
+      h1 {
+        text-align: center;
+        color: white;
+        font-size: 28px;
+        margin-top: 20px;
+      }
+
+      /* Supermarkets section with circular images */
+      .supermarkets {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin: 30px 0;
+        flex-wrap: wrap;
+      }
+
+      .supermarket {
+        cursor: pointer;
+        transition: transform 0.3s ease;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .supermarket img {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .supermarket:hover {
+        transform: translateY(-5px);
+      }
+
+      /* Promotions section */
+      .promotions-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+      }
+
+      .promotion-item {
+        color: black;
+        border-radius: 10px;
+        padding: 15px;
+        width: 200px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        transition: transform 0.3s ease;
+      }
+
+      .promotion-item:hover {
+        transform: translateY(-5px);
+      }
+
+      /* Recipe section */
+      #recipe {
+        text-align: center;
+        margin-top: 40px;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        font-size: 18px;
+        color: #333;
+      }
+
+      .input-group {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      /* Footer */
+      footer {
+        text-align: center;
+        padding: 20px;
+        background-color: #f1f1f1;
+        font-size: 14px;
+        color: #555;
+        width: 100%;
+      }
+
+      /* Responsive adjustments */
+      @media screen and (max-width: 768px) {
+        header {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .supermarkets {
+          flex-direction: column;
+          gap: 15px;
+        }
+
+        .supermarket img {
+          width: 80px;
+          height: 80px;
+        }
+
+        h1 {
+          font-size: 24px;
+        }
+      }
+    </style>
+    <script>
+      function setSupermarket(url) {
+        document.getElementById("url").value = url;
+        scrapePromotions();
+      }
+
+      async function scrapePromotions() {
+        const url = document.getElementById("url").value;
+        const response = await fetch("/scrape", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+        const data = await response.json();
+
+        console.log("Scraped Promotions Data:", data); // Debugging
+
+        const promotionsDiv = document.getElementById("promotions");
+        promotionsDiv.innerHTML = data.promotions
+          .map(
+            (p) =>
+              `<div class="promotion-item">
+                <p><input type="checkbox" value="${p.product}" /> ${p.product} - €${p.price}</p>
+              </div>`
+          )
+          .join("");
+      }
+
+      async function generateRecipe() {
+        const selectedProducts = Array.from(
+          document.querySelectorAll("#promotions input:checked")
+        ).map((checkbox) => checkbox.value.trim());
+
+        const response = await fetch("/generate_recipe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ products: selectedProducts }),
+        });
+        const data = await response.json();
+
+        console.log("Generated Recipe Data:", data); // Debugging
+
+        const recipeDiv = document.getElementById("recipe");
+        recipeDiv.innerHTML = data.recipe
+          .map(
+            (recipe, index) => `
+              <h2>Recipe ${index + 1}: ${recipe.title}</h2>
+              <p><strong>Description:</strong> ${recipe.description}</p>
+              <p><strong>Ingredients:</strong> ${recipe.ingredients.join(
+                ", "
+              )}</p>
+              <p><strong>Estimated Price:</strong> €${recipe.price}</p>
+              <img src="https://image.pollinations.ai/prompt/${encodeURIComponent(
+                recipe.title + " " + recipe.description
+              )}" alt="Generated Image" style="width:100%;border-radius:10px;"/>
+              <hr>
+            `
+          )
+          .join("");
+      }
+    </script>
+  </head>
+  <body>
+    <header>
+      <img src="templates/logo.png" alt="Logo" class="logo" />
+      <a href="#footer" class="footer-link">Copyright & Disclaimer</a>
+    </header>
+
+    <div class="content">
+      <h1>Supermarket Promotions and Recipe Generator</h1>
+
+      <div class="container">
+        <div class="supermarkets">
+          <div
+            class="supermarket"
+            onclick="setSupermarket('https://www.carrefour.it/promozioni/')"
+          >
+            <img src="templates/carrefour.png" alt="Carrefour" />
+          </div>
+          <div
+            class="supermarket"
+            onclick="setSupermarket('https://pamacasa.pampanorama.it/spesa-consegna-domicilio/00144/prodotti-in-promozione')"
+          >
+            <img src="templates/pam.png" alt="Pam" />
+          </div>
+          <div
+            class="supermarket"
+            onclick="setSupermarket('https://www.aldi.it/it/offerte-settimanali/offerte-di-questa-settimana.html#freschezza')"
+          >
+            <img src="templates/aldi.png" alt="Aldi" />
+          </div>
+        </div>
+
+        <div class="input-group">
+          <input id="url" type="hidden" />
+        </div>
+
+        <div id="promotions" class="promotions-list"></div>
+        <div class="input-group">
+          <button onclick="generateRecipe()">Generate Recipe</button>
+        </div>
+
+        <div id="recipe"></div>
+        <div class="error-message" id="error-message"></div>
+
+        <footer id="footer">
+          <p>
+            This project is created solely for educational and demonstrative
+            purposes as part of a hackathon. It is not affiliated with, endorsed
+            by, or officially associated with Carrefour, Pam, or Aldi. All
+            trademarks, logos, and brand names used in this project are the
+            property of their respective owners. Their use is for identification
+            and illustrative purposes only. No copyright or trademark
+            infringement is intended.
+          </p>
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>
