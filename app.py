@@ -10,7 +10,7 @@ import searchProducts
 app = Flask(__name__)
 
 # Initialize Groq client (make sure you set up your GROQ_API_KEY in your environment)
-groq_client = Groq(api_key='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')
+groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 # Function to scrape supermarket promotions (Carrefour example)
 def scrape_promotions(url):

@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import json
+import os
 
 
 from groq import Groq
@@ -50,7 +51,7 @@ def extract_images(soup):
         
 def searchProducts(urls):
     client = Groq(
-        api_key="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",
+        api_key=os.getenv("GROQ_API_KEY"),
     )
     products=[]
     for url in urls:
